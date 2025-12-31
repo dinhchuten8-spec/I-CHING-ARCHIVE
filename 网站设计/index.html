@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>I-CHING ARCHIVE | 变</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400&family=Noto+Serif+SC:wght@200;300;400;500;700&family=JetBrains+Mono:wght@200;300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F9F9F7;
+            --fg: #111;
+            --accent: #000000; 
+            --grid: #E5E5E5;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', 'Noto Serif SC', serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            cursor: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; font-weight: 300; }
+        .serif { font-family: 'Noto Serif SC', serif; }
+        .cn-font { font-family: 'Noto Serif SC', serif; font-weight: 200; }
+        .en-font { font-family: 'Inter', sans-serif; font-weight: 200; }
+
+        /* --- Cursor System --- */
+        #cursor {
+            position: fixed; top: 0; left: 0;
+            width: 8px; height: 8px;
+            background-color: transparent;
+            border: 0.5px solid var(--fg);
+            border-radius: 50%;
+            pointer-events: none; z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+                        height 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+                        background-color 0.2s;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.8); 
+            will-change: transform, width, height;
+        }
+        body.hover-active #cursor {
+            width: 32px; height: 32px;
+            background-color: rgba(0, 0, 0, 0.03);
+            border: 0.5px solid var(--fg);
+        }
+        body.click-active #cursor {
+            width: 4px; height: 4px;
+            background-color: var(--accent);
+            border-color: transparent;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Animations */
+        .fade-out-force { opacity: 0 !important; pointer-events: none !important; transition: opacity 0.8s ease !important; }
+        .fade-in-up { animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* 通用按钮 */
+        .btn-back {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px; color: #ccc;
+            transition: all 0.3s; cursor: none;
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-back:hover { color: #000; transform: translateX(-2px); }
+        .btn-back::before { content: '←'; }
+
+        /* SECTION 1: Entrance */
+        #sec-entrance {
+            position: absolute; inset: 0; z-index: 50;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: var(--bg); transition: opacity 0.8s ease;
+            padding: 40px; text-align: center;
+        }
+        
+        .entry-dot {
+            width: 6px; height: 6px; background: var(--fg); border-radius: 50%; margin-bottom: 2.5rem;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .interactable:hover .entry-dot { transform: scale(3); background: var(--fg); }
+
+        .intro-text {
+            max-width: 500px;
+            border-top: 0.5px solid rgba(0,0,0,0.1);
+            padding-top: 2rem;
+            position: relative;
+        }
+        
+        /* Tooltip */
+        .tooltip-trigger { 
+            border-bottom: 0.5px dotted #999; cursor: help; position: relative; 
+            transition: border-color 0.3s, color 0.3s;
+        }
+        .tooltip-trigger:hover { border-bottom-style: solid; border-color: #000; color: #000; }
+        
+        .tooltip-content {
+            position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%);
+            width: 280px; padding: 20px; 
+            background: #fff; border: 0.5px solid #111; 
+            font-size: 11px; line-height: 1.8; color: #333; text-align: left;
+            opacity: 0; pointer-events: none; transition: all 0.3s;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08); 
+            font-family: 'Noto Serif SC', serif; font-weight: 300;
+            z-index: 60;
+        }
+        .tooltip-content::after {
+            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px;
+            border-width: 5px; border-style: solid;
+            border-color: #111 transparent transparent transparent;
+        }
+        .tooltip-trigger:hover .tooltip-content { opacity: 1; transform: translateX(-50%) translateY(5px); pointer-events: auto; }
+
+        /* SECTION 1.5: Philosophy Context */
+        #sec-philosophy {
+            position: absolute; inset: 0; z-index: 45;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow-y: auto; overflow-x: hidden;
+            background: var(--bg); transition: opacity 0.8s ease;
+            padding: 40px; opacity: 0; pointer-events: none; display: none;
+        }
+        
+        .phil-card {
+            max-width: 680px; width: 100%; text-align: left; position: relative;
+            margin: auto 0;
+        }
+        
+        .binary-logic-row {
+            display: flex; align-items: flex-start; gap: 24px; margin-bottom: 36px;
+            padding-left: 16px; border-left: 0.5px solid #e5e5e5;
+        }
+        .logic-icon { 
+            width: 18px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding-top: 4px; flex-shrink: 0;
+        }
+        .logic-yang { width: 18px; height: 1px; background: #111; }
+        .logic-yin { width: 18px; height: 1px; display: flex; justify-content: space-between; }
+        .logic-yin::before, .logic-yin::after { content:''; width: 7px; height: 100%; background: #111; }
+        
+        .logic-content h3 { font-family: 'Noto Serif SC'; font-size: 14px; font-weight: 400; margin-bottom: 4px; color: #000; letter-spacing: 0.05em; }
+        .logic-content p { font-family: 'Noto Serif SC'; font-size: 13px; font-weight: 200; color: #444; line-height: 1.8; text-align: justify; }
+        .logic-en { font-family: 'Inter'; font-size: 11px; font-weight: 200; color: #999; line-height: 1.4; margin-top: 4px; display: block; font-style: italic; }
+
+        .btn-text {
+            font-family: 'Noto Serif SC'; font-size: 12px; letter-spacing: 0.2em; 
+            border-bottom: 0.5px solid #ccc; padding-bottom: 2px; color: #666;
+            transition: all 0.3s; display: inline-block; cursor: none;
+        }
+        .btn-text:hover { color: #000; border-color: #000; }
+
+        /* SECTION 2: Matrix */
+        #sec-matrix {
+            position: absolute; inset: 0; z-index: 40;
+            display: flex; flex-direction: column;
+            padding: 4vh 4vw; opacity: 0; pointer-events: none; transition: opacity 0.8s;
+            display: none; 
+        }
+        #sec-matrix.active { opacity: 1; pointer-events: auto; }
+
+        .grid-wrapper {
+            flex-grow: 1; display: grid; 
+            grid-template-columns: repeat(8, 1fr); 
+            grid-template-rows: repeat(8, 1fr);
+            border-top: 0.5px solid var(--grid); border-left: 0.5px solid var(--grid);
+            margin: 20px 0; min-height: 0; 
+        }
+        .cell {
+            border-right: 0.5px solid var(--grid); border-bottom: 0.5px solid var(--grid);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+            transition: transform 0.2s ease-out, background-color 0.2s; 
+            position: relative; background: transparent; will-change: transform;
+        }
+        .cell:hover { 
+            background: #fff; z-index: 10; transform: scale(1.05); 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); border-color: transparent; 
+        }
+        
+        .mini-line { width: 16px; height: 1px; background: #ccc; }
+        .cell:hover .mini-line { background: #111; }
+        .mini-line.yin { background: transparent; display: flex; justify-content: space-between; }
+        .mini-line.yin::before, .mini-line.yin::after { 
+            content: ''; width: 40%; height: 100%; background: #ccc; transition: background-color 0.2s; 
+        }
+        .cell:hover .mini-line.yin::before, .cell:hover .mini-line.yin::after { background: #111; }
+
+        .btn-primary {
+            background: #111; color: #fff; padding: 12px 32px;
+            font-family: 'Noto Serif SC', serif; font-size: 11px; font-weight: 300; letter-spacing: 0.2em;
+            border-radius: 1px; transition: transform 0.2s, background 0.3s;
+        }
+        .btn-primary:hover { transform: scale(1.02); background: #000; }
+
+        /* SECTION 2.5: Detail Panel */
+        #sec-detail-modal {
+            position: absolute; inset: 0; z-index: 80;
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(2px);
+            display: flex; justify-content: flex-end;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #sec-detail-modal.active { opacity: 1; pointer-events: auto; }
+
+        .detail-panel {
+            width: 100%; max-width: 500px; height: 100%;
+            background: #fff; padding: 60px;
+            transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column; overflow-y: auto;
+            border-left: 0.5px solid #eee; box-shadow: -10px 0 40px rgba(0,0,0,0.02);
+        }
+        #sec-detail-modal.active .detail-panel { transform: translateX(0); }
+
+        /* SECTION 3: Build Ritual */
+        #sec-build {
+            position: absolute; inset: 0; z-index: 60;
+            background: var(--bg);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.5s;
+            perspective: 1200px; 
+            display: none;
+        }
+        #sec-build.active { opacity: 1; pointer-events: auto; }
+
+        #flash-layer {
+            position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.1s;
+        }
+
+        .ritual-container {
+            width: 240px; height: 360px;
+            display: flex; flex-direction: column-reverse; 
+            gap: 16px; margin-bottom: 60px; position: relative;
+            transform-origin: center center; transition: transform 0.2s; transform-style: preserve-3d;
+        }
+        .ritual-container.analyzing { margin-bottom: 0; animation: hex-spin 6s linear infinite; }
+        @keyframes hex-spin { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(360deg); } }
+
+        .scan-beam {
+            position: absolute; top: 0; left: -10%; width: 120%; 
+            height: 1px; background: #bbb;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05); opacity: 0;
+            animation: scanning 1.5s ease-in-out infinite; pointer-events: none;
+        }
+        @keyframes scanning { 
+            0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } 
+        }
+
+        .hex-bar {
+            width: 100%; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; animation: materialize 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+            backface-visibility: visible;
+        }
+        @keyframes materialize { 
+            0% { transform: translateY(40px) scale(0.95); opacity: 0; } 100% { transform: translateY(0) scale(1); opacity: 1; } 
+        }
+
+        .b-solid { width: 100%; height: 100%; background: var(--fg); }
+        .b-broken { width: 100%; height: 100%; display: flex; justify-content: space-between; }
+        .b-broken::before, .b-broken::after { content: ''; width: 42%; height: 100%; background: var(--fg); }
+
+        #quantum-state { width: 240px; height: 36px; opacity: 0.2; mix-blend-mode: multiply; }
+
+        /* SECTION 4: Result */
+        #sec-result {
+            position: absolute; inset: 0; z-index: 70;
+            background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.8s;
+            display: none; 
+        }
+        #sec-result.active { opacity: 1; pointer-events: auto; }
+
+        .archive-card {
+            width: 100%; max-width: 600px; padding: 60px;
+            background: #fff; max-height: 90vh; overflow-y: auto;
+            border: 0.5px solid #eee; box-shadow: 0 20px 60px rgba(0,0,0,0.02);
+            display: flex; flex-direction: column;
+        }
+
+        .label-text { 
+            font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 300; color: #999; 
+            margin-bottom: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+        }
+        .content-text { 
+            font-family: 'Noto Serif SC', serif; font-size: 15px; line-height: 2; color: #333; 
+            font-weight: 200; text-align: justify; 
+        }
+        .content-sub {
+            font-family: 'Inter', sans-serif; font-size: 12px; color: #999; 
+            margin-top: 6px; line-height: 1.6; font-weight: 200; font-style: italic;
+        }
+
+        .ancient-text {
+             font-family: 'Noto Serif SC', serif; font-size: 16px; font-weight: 400; color: #111; letter-spacing: 0.05em; margin-bottom: 4px;
+        }
+
+        .highlight-cn { font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 400; color: #000; margin-bottom: 4px; display: block; }
+        .highlight-en { font-family: 'Inter', sans-serif; font-size: 12px; color: #bbb; margin-left: 8px; font-weight: 200; font-style: italic; }
+
+        .btn-center-back {
+            display: flex; flex-col; items-center; justify-center;
+            border-bottom: 0.5px solid rgba(0,0,0,0.2); padding-bottom: 4px; cursor: none;
+            transition: all 0.3s;
+        }
+        .btn-center-back:hover { border-color: #000; }
+
+        .line-detail-row {
+            display: flex; align-items: center; gap: 16px; margin-bottom: 16px; border-bottom: 0.5px solid #f9f9f9; padding-bottom: 12px;
+        }
+        .line-num { font-family: 'JetBrains Mono'; font-size: 10px; color: #ddd; width: 20px; }
+        
+        .line-name { font-size: 13px; color: #111; font-weight: 400; }
+        .line-desc { font-size: 12px; color: #888; font-weight: 200; margin-left: 8px; }
+        
+        .detail-line { width: 100%; height: 4px; background: #000; }
+        .detail-line.yin { background: transparent; display: flex; justify-content: space-between; }
+        .detail-line.yin::before, .detail-line.yin::after { content: ''; width: 42%; height: 100%; background: #000; }
+
+        .btn-text-action {
+            font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 300; letter-spacing: 0.3em;
+            color: #ccc; padding-bottom: 4px; border-bottom: 0.5px solid transparent;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); cursor: none; text-transform: uppercase;
+        }
+        .btn-text-action:hover { color: #000; border-bottom-color: #000; }
+
+        .footer-note {
+            margin-top: auto; padding-top: 40px; border-top: 0.5px dotted #ddd;
+            font-size: 10px; line-height: 1.8; color: #999;
+            text-align: justify; font-weight: 200;
+        }
+        
+        .g-line { width: 100%; height: 2px; background: #111; margin-bottom: 4px; }
+        .g-line.yin { background: transparent; display: flex; justify-content: space-between; }
+        .g-line.yin::before, .g-line.yin::after { content: ''; width: 42%; height: 100%; background: #111; }
+
+    </style>
+</head>
+<body>
+
+    <div id="cursor"></div>
+
+    <!-- 1. 入口 -->
+    <section id="sec-entrance" class="interactable" onclick="enterPhilosophy()">
+        <div class="entry-dot"></div>
+        <div class="mt-8 flex flex-col items-center gap-4">
+            <h1 class="cn-font text-4xl font-light tracking-widest text-black" style="font-weight: 200;">变</h1>
+            <div class="en-font text-[9px] tracking-[0.4em] text-gray-400">BINARY DECISION CALIBRATION</div>
+        </div>
+        
+        <div class="intro-text fade-in-up">
+            <p class="cn-font text-sm leading-8 text-gray-600 font-light text-center">
+                <span class="tooltip-trigger border-b border-gray-300 pb-0.5 hover:text-black hover:border-black transition-colors">六爻卜卦
+                    <span class="tooltip-content">
+                        <strong>象数推演体系</strong><br><br>
+                        六爻是基于《易经》的传统推演系统。通过六次随机事件（如掷币）构建阴阳模型，捕捉事物在时空中的动态变化趋势，集哲学、符号学与概率论于一体，是东方的决策智慧。
+                    </span>
+                </span>
+                是可溯源至中国古代商周时期的<span class="tooltip-trigger border-b border-gray-300 pb-0.5 hover:text-black hover:border-black transition-colors">二进制决策系统
+                    <span class="tooltip-content">
+                        <strong>二进制渊源</strong><br><br>
+                        17世纪，德国数学家莱布尼茨(Leibniz)发现易经六爻（阴--/阳—）与二进制算术（0/1）存在完美的数学对应关系。这被认为是现代计算机科学的哲学先驱。
+                    </span>
+                </span>。
+            </p>
+        </div>
+        
+        <button class="absolute bottom-16 btn-text-action interactable" onclick="event.stopPropagation(); enterPhilosophy();">
+            CLICK TO ENTER
+        </button>
+    </section>
+
+    <!-- 1.5 缘起 -->
+    <section id="sec-philosophy">
+        <div class="absolute top-10 left-10 z-50">
+            <button onclick="backToEntranceFromPhil(event)" class="btn-back interactable" aria-label="Return"></button>
+        </div>
+
+        <div class="phil-card fade-in-up">
+            <div class="en-font text-[9px] text-gray-400 mb-10 tracking-widest">LOGIC</div>
+            <h2 class="cn-font text-2xl font-light mb-12 text-black tracking-wide">符号化思维模型</h2>
+            
+            <div class="space-y-10">
+                <!-- 阳爻 -->
+                <div class="binary-logic-row">
+                    <div class="logic-icon"><div class="logic-yang"></div></div>
+                    <div class="logic-content">
+                        <h3>阳爻</h3>
+                        <p>就如开关里的“开”。代表“主动”、“进取”、“刚健”。</p>
+                        <span class="logic-en">Like a switch turned "ON". Active, Creative.</span>
+                    </div>
+                </div>
+
+                <!-- 阴爻 -->
+                <div class="binary-logic-row">
+                    <div class="logic-icon"><div class="logic-yin"></div></div>
+                    <div class="logic-content">
+                        <h3>阴爻</h3>
+                        <p>就如开关里的“关”。代表“被动”、“承载”、“柔顺”。</p>
+                        <span class="logic-en">Like a switch turned "OFF". Passive, Receptive.</span>
+                    </div>
+                </div>
+
+                <!-- 六爻 -->
+                <div class="binary-logic-row">
+                    <div class="logic-icon h-auto flex flex-col justify-center gap-1 pt-1">
+                        <div class="logic-yin"></div>
+                        <div class="logic-yang"></div>
+                        <div class="logic-yin"></div>
+                        <div class="logic-yang"></div>
+                        <div class="logic-yin"></div>
+                        <div class="logic-yang"></div>
+                    </div>
+                    <div class="logic-content w-full">
+                        <h3>六爻</h3>
+                        <p>
+                            就如6个开关排在一起，每个开关只有“开”或“关”两种选择。6个开关能凑出64种不同的组合。<br><br>
+                            例如：(开, 关, 开, 关, 开, 关)......<br>
+                            <span class="block mt-4 text-black/80 font-normal">
+                                六爻卜卦本质是符号化思维模型，把复杂问题映射到卦象。
+                            </span>
+                        </p>
+                        <span class="logic-en mt-2">Just like 6 switches aligned, forming 64 unique states. A symbolic model mapping complex reality to hexagrams.</span>
+                        <div class="text-[9px] text-gray-400 text-right mt-3 mr-2 font-light">
+                            * 以既济卦为例
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="enterMatrix()" class="btn-text interactable mt-16 text-xs tracking-widest">
+                进入图谱 →
+            </button>
+        </div>
+    </section>
+
+    <!-- 2. 图谱 -->
+    <section id="sec-matrix">
+        <header class="flex justify-between items-end border-b border-gray-200 pb-4">
+            <div class="flex flex-col items-start gap-1">
+                <button onclick="backToPhilosophy(event)" class="btn-back interactable mb-1" aria-label="Return"></button>
+                <h1 class="cn-font text-lg font-light tracking-widest text-black">易经图谱</h1>
+                <p class="en-font text-[9px] text-gray-400 tracking-widest mt-0.5 font-light">DATABASE</p>
+            </div>
+            <div class="cn-font text-[9px] text-gray-400 font-light tracking-widest">点击查看详情</div>
+        </header>
+
+        <div class="grid-wrapper" id="grid"></div>
+
+        <footer class="flex justify-between items-end h-24">
+            <div class="w-1/2">
+                <div class="cn-font text-[9px] text-gray-400 mb-2 font-light tracking-widest">当前状态</div>
+                <div class="flex items-baseline gap-4">
+                    <div id="hover-cn" class="cn-font text-3xl font-light text-black">--</div>
+                    <!-- 恢复英文显示以保持布局平衡，但颜色极淡 -->
+                    <div id="hover-en" class="en-font text-sm text-gray-300"></div>
+                </div>
+            </div>
+            <button onclick="startBuild()" class="btn-primary interactable flex flex-col items-center justify-center gap-1">
+                <span>开始占卜</span>
+                <span class="en-font text-[9px] tracking-widest font-light opacity-60">START</span>
+            </button>
+        </footer>
+    </section>
+
+    <!-- 2.5 详情页 -->
+    <section id="sec-detail-modal" onclick="closeDetail()">
+        <div class="detail-panel" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-start mb-12">
+                <div class="en-font text-[9px] text-gray-400 tracking-widest">ARCHIVE RECORD</div>
+                <button onclick="closeDetail()" class="btn-text interactable text-[10px]">关闭</button>
+            </div>
+
+            <div class="w-16 flex flex-col gap-1.5 mb-10" id="detail-graphic"></div>
+
+            <h2 class="cn-font text-5xl font-light mb-2 text-black" id="detail-cn"></h2>
+            <h3 class="en-font text-xl text-gray-400 mb-12 font-light italic" id="detail-en"></h3>
+
+            <div class="space-y-14">
+                <!-- 古籍原文区 -->
+                <div class="pb-8 border-b border-gray-100">
+                     <div class="label-text">古籍 · 卦辞</div>
+                     <p class="ancient-text" id="detail-oracle"></p>
+                     <p class="content-sub" id="detail-oracle-en"></p>
+                </div>
+                
+                <div class="pb-8 border-b border-gray-100">
+                     <div class="label-text">古籍 · 象传</div>
+                     <p class="ancient-text" id="detail-image"></p>
+                     <p class="content-sub" id="detail-image-en"></p>
+                </div>
+
+                <!-- 现代解析区 -->
+                <div>
+                    <div class="label-text">象征 Symbol</div>
+                    <p class="content-text" id="detail-symbol"></p>
+                </div>
+
+                <div>
+                    <div class="label-text">指引 Guide</div>
+                    <p class="content-text text-gray-600" id="detail-guide"></p>
+                </div>
+                
+                <div>
+                    <div class="label-text">策略 Strategy</div>
+                    <p class="content-text text-gray-400" id="detail-structure"></p>
+                    <p class="content-sub" id="detail-structure-en"></p>
+                </div>
+                
+                <div>
+                    <div class="label-text">爻位结构</div>
+                    <div id="detail-lines-container" class="mt-6"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. 占卜仪式 -->
+    <section id="sec-build" class="interactable" onclick="collapse()">
+        <div id="flash-layer"></div>
+        
+        <div id="abort-btn-container" class="absolute top-8 left-8 z-50 transition-opacity duration-500">
+            <button onclick="abortRitual(event)" class="btn-back interactable" aria-label="Abort"></button>
+        </div>
+
+        <div class="absolute top-24 w-full text-center fade-in-up transition-opacity duration-500" id="meaning-display">
+            <div class="en-font text-[9px] tracking-[0.3em] text-gray-400 mb-4 font-light">LAYER <span id="step-idx" class="mono">1</span>/6</div>
+            <div class="cn-font text-2xl font-light text-black tracking-widest" id="step-meaning"></div>
+        </div>
+
+        <div class="ritual-container" id="stack"></div>
+        <div id="quantum-state"></div>
+        
+        <div id="build-guide" class="absolute bottom-20 w-full flex flex-col items-center gap-2 animate-pulse pointer-events-none transition-opacity duration-500">
+            <div class="btn-text-action tracking-[0.2em]" style="pointer-events:none; color: #ccc;">CLICK TO COLLAPSE</div>
+            <div class="cn-font text-[10px] tracking-[0.4em] text-gray-500 font-light mt-2">点击占卜</div>
+        </div>
+    </section>
+
+    <!-- 4. 结果页 -->
+    <section id="sec-result">
+        <div class="archive-card fade-in-up">
+            <div class="flex justify-between border-b border-gray-100 pb-4 mb-10">
+                <span class="en-font text-[10px] text-gray-400 tracking-widest">ID <span id="res-code" class="text-black mono">#000000</span></span>
+                <span class="mono text-[10px] text-gray-400" id="res-date"></span>
+            </div>
+
+            <div class="flex gap-12 mb-8">
+                <div class="w-12 flex flex-col gap-1.5 pt-2" id="res-graphic"></div>
+
+                <div class="flex-1">
+                    <h2 class="cn-font text-6xl font-light mb-2 text-black" id="res-cn"></h2>
+                    <h3 class="en-font text-lg text-gray-400 mb-10 font-light" id="res-en"></h3>
+                    
+                    <div class="space-y-12">
+                        <div>
+                            <div class="label-text">状态分析</div>
+                            <div class="highlight-cn" id="res-highlight-a"></div>
+                            <div class="highlight-en" id="res-highlight-a-en"></div>
+                            <p class="content-text" id="res-analysis"></p>
+                            <p class="content-sub" id="res-analysis-en"></p>
+                        </div>
+                        <div>
+                            <div class="label-text">行动指南</div>
+                            <div class="highlight-cn" id="res-highlight-p"></div>
+                            <div class="highlight-en" id="res-highlight-p-en"></div>
+                            <p class="content-text text-gray-600" id="res-protocol"></p>
+                            <p class="content-sub" id="res-protocol-en"></p>
+                        </div>
+                        
+                         <div>
+                            <div class="label-text">策略</div>
+                            <div class="highlight-cn" id="res-highlight-s"></div>
+                            <div class="highlight-en" id="res-highlight-s-en"></div>
+                            <p class="content-text text-gray-600" id="res-structure"></p>
+                            <p class="content-sub" id="res-structure-en"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-8 border-t border-gray-100 text-center pb-8 opacity-70">
+                <div class="footer-note">
+                    六爻是基于《易经》的象数推演思维工具，是古人“天人合一”与动态平衡观的符号化模型，可帮你打开视角、梳理问题；但它不是宿命神谕，更不能替代科学决策与自主判断，切勿当成唯一答案。
+                    <span class="block mt-2 font-sans opacity-50">Six Lines (Liu Yao) is a symbolic model for dynamic balance, helping to open perspectives. It is not fatalistic and cannot replace scientific decision-making.</span>
+                </div>
+            </div>
+
+            <div class="flex justify-center pb-4">
+                <button onclick="returnToMatrix()" class="flex flex-col items-center group interactable cursor-none btn-text-action">
+                    <span class="group-hover:text-black transition-colors tracking-widest">RETURN</span>
+                    <span class="cn-font text-[10px] font-light text-gray-400 mt-1">返回</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // --- 完整 64 卦双语数据库 (Key: 顶->底 二进制) ---
+        // 映射规则：1=阳, 0=阴. Key 顺序 Top -> Bottom
+        // 注：此数据为精简后的核心数据，确保覆盖所有64种组合
+        const hexMap = {
+            "111111": { id: 1, cn: "乾", en: "The Creative", structure: "天上天", judgment: "元亨利贞。", symbol: "纯阳之象，天道刚健。象征生生不息的原动力、父亲与开创者。", guide: "效法天道，自强不息。时机成熟时大展宏图，但要在巅峰时警惕傲慢。", oracle: "元亨利贞。", oracle_en: "Supreme success. Perseverance furthers.", image: "天行健，君子以自强不息。", image_en: "The movement of heaven is full of power. Thus the superior man makes himself strong and untiring.", sd: "全息辐射。六爻皆阳，系统处于最高能级。", sd_en: "Holographic Radiation. System at highest energy level." },
+            "000000": { id: 2, cn: "坤", en: "The Receptive", structure: "地上地", judgment: "元亨，利牝马之贞。", symbol: "纯阴之象，大地柔顺。象征包容、承载、孕育与配合的力量。", guide: "厚德载物。不强行主导，顺应形势，辅佐贤能，以静制动。", oracle: "元亨，利牝马之贞。", oracle_en: "Supreme success. Furthering through the perseverance of a mare.", image: "地势坤，君子以厚德载物。", image_en: "The earth's condition is receptive devotion. Thus the superior man who has breadth of character carries the outer world.", sd: "全息收敛。六爻皆阴，系统处于最低能级。", sd_en: "Holographic Convergence. System at lowest energy level." },
+            "010001": { id: 3, cn: "屯", en: "Difficulty at the Beginning", structure: "水雷", judgment: "元亨利贞，勿用有攸往。", symbol: "云雷交作，万物初生。如幼苗破土，充满生机但面临混沌艰难。", guide: "积蓄力量，建立根基。创业初期不宜轻举妄动，寻找助手分担困难。", oracle: "元亨利贞，勿用有攸往，利建侯。", oracle_en: "Supreme success. Nothing should be undertaken. It furthers one to appoint helpers.", image: "云雷，屯；君子以经纶。", image_en: "Clouds and thunder: The image of Difficulty at the Beginning. Thus the superior man brings order out of confusion.", sd: "混沌初开。能量正在积聚。", sd_en: "Chaos opening. Energy accumulating." },
+            "100010": { id: 4, cn: "蒙", en: "Youthful Folly", structure: "山水", judgment: "匪我求童蒙，童蒙求我。", symbol: "山下出泉，智慧未开。象征启蒙阶段，前路迷茫，需要引导。", guide: "教育需主动求索。受教者应诚恳，施教者应给予规范与正确引导。", oracle: "匪我求童蒙，童蒙求我。", oracle_en: "It is not I who seek the young fool; the young fool seeks me.", image: "山下出泉，蒙；君子以果行育德。", image_en: "A spring gushes forth at the foot of the mountain: The image of Youth. Thus the superior man fosters his character by thoroughness in all that he does.", sd: "蒙昧待启。潜力在内部酝酿。", sd_en: "Ignorance waiting. Potential brewing within." },
+            "010111": { id: 5, cn: "需", en: "Waiting", structure: "水天", judgment: "有孚，光亨，贞吉。", symbol: "云上于天，需待时雨。象征在危险前需要等待时机。", guide: "养精蓄锐，等待时机。利用等待时养精蓄锐，信心充足时便可涉险。", oracle: "有孚，光亨，贞吉。利涉大川。", oracle_en: "Sincerity brings success. Perseverance brings good fortune. It furthers one to cross the great water.", image: "云上于天，需；君子以饮食宴乐。", image_en: "Clouds rise up to heaven: The image of Waiting. Thus the superior man eats and drinks, is joyous and of good cheer.", sd: "势能积蓄。等待临界点。", sd_en: "Potential accumulation. Waiting for critical point." },
+            "111010": { id: 6, cn: "讼", en: "Conflict", structure: "天水", judgment: "有孚，窒。惕中吉。", symbol: "天水背离。象征因立场不同而产生的争端与诉讼。", guide: "适可而止，寻求调解。即使有理也应适可而止，执意争斗到底为凶。", oracle: "有孚，窒。惕中吉。终凶。", oracle_en: "Sincerity is obstructed. Cautious halting halfway brings good fortune. Going to the end brings misfortune.", image: "天与水违行，讼；君子以作事谋始。", image_en: "Heaven and water go their opposite ways: The image of Conflict. Thus the superior man in all his transactions considers the beginning.", sd: "反向张力。系统内部撕裂。", sd_en: "Opposing tension. System tearing apart." },
+            "000010": { id: 7, cn: "师", en: "The Army", structure: "地水", judgment: "贞，丈人，吉无咎。", symbol: "地中藏水，寓兵于民。象征军事行动与大众聚散。", guide: "正义之战，严明纪律。战争危险，需由德高望重者指挥。", oracle: "贞，丈人，吉无咎。", oracle_en: "Perseverance. The leader must be experienced. Good fortune. No blame.", image: "地中有水，师；君子以容民畜众。", image_en: "Water in the earth: The image of the Army. Thus the superior man increases his masses by benevolence toward the people.", sd: "聚众势能。危险隐藏于地下。", sd_en: "Mass potential. Danger hidden underground." },
+            "010000": { id: 8, cn: "比", en: "Holding Together", structure: "水地", judgment: "吉。原筮元永贞。", symbol: "水附于地，亲密无间。象征联盟、亲近与依附。", guide: "主动亲近，诚信合作。主动亲近他人，建立基于诚信的长期合作，迟疑者将失去机会。", oracle: "吉。原筮元永贞，无咎。", oracle_en: "Good fortune. Inquire of the oracle once again whether you possess sublimity, constancy, and perseverance.", image: "地上有水，比；先王以建万国，亲诸侯。", image_en: "Water on the earth: The image of Holding Together. Thus the kings of antiquity established the different states and maintained friendly relations with their princes.", sd: "吸附结合。各单元紧密连接。", sd_en: "Adsorption bonding. Units tightly connected." },
+            "110111": { id: 9, cn: "小畜", en: "Taming Power of the Small", structure: "风天", judgment: "密云不雨，自我西郊。", symbol: "风吹云聚，蓄势待发。象征暂时的停顿与蓄积。", guide: "修养文德，小规模整顿。力量有限时，不宜推行大事。", oracle: "密云不雨，自我西郊。", oracle_en: "Dense clouds, no rain from our western region.", image: "风行天上，小畜；君子以懿文德。", image_en: "The wind drives across heaven: The image of The Taming Power of the Small. Thus the superior man refines the outward aspect of his nature.", sd: "微弱约束。小力量控制大局。", sd_en: "Weak constraint. Small force controls big picture." },
+            "111011": { id: 10, cn: "履", en: "Treading", structure: "天泽", judgment: "履虎尾，不咥人，亨。", symbol: "如履薄冰，伴君如伴虎。象征处境危险但有惊无险。", guide: "以柔克刚，小心谨慎。严格遵守礼节，即使面对强权也能安然度过。", oracle: "履虎尾，不咥人，亨。", oracle_en: "Treading upon the tail of the tiger. It does not bite. Success.", image: "上天下泽，履；君子以辨上下，定民志。", image_en: "Heaven above, the lake below: The image of Treading. Thus the superior man discriminates between high and low, and thereby fortifies the thinking of the people.", sd: "高危平衡。在极高张力下保持稳定。", sd_en: "High-risk balance. Stability under high tension." },
+            "000111": { id: 11, cn: "泰", en: "Peace", structure: "地天", judgment: "小往大来，吉亨。", symbol: "天地交融，万物通畅。象征最理想的和谐与繁荣。", guide: "上下同心，大展宏图。这是君子道长的黄金时期，应充分利用时机。", oracle: "小往大来，吉亨。", oracle_en: "The Small departs, the Great approaches. Good fortune. Success.", image: "天地交，泰；后以财成天地之道，辅相天地之宜，以左右民。", image_en: "Heaven and earth unite: The image of Peace. Thus the ruler divides and completes the course of heaven and earth; he furthers and regulates the gifts of heaven and earth, and so aids the people.", sd: "完美对流。能量自由交换。", sd_en: "Perfect convection. Energy exchanges freely." },
+            "111000": { id: 12, cn: "否", en: "Standstill", structure: "天地", judgment: "否之匪人，不利君子贞。", symbol: "天地不交，背道而驰。象征闭塞、混乱与逆境。", guide: "俭德避难，收敛才华。小人得势时，君子应收敛才华，退隐保全自己。", oracle: "否之匪人，不利君子贞，大往小来。", oracle_en: "Standstill. Evil people do not further the perseverance of the superior man. The great departs; the small approaches.", image: "天地不交，否；君子以俭德辟难，不可荣以禄。", image_en: "Heaven and earth do not unite: The image of Standstill. Thus the superior man falls back upon his inner worth in order to escape the difficulties. He does not permit himself to be honored with revenue.", sd: "绝对隔绝。系统失去流动性。", sd_en: "Absolute isolation. System loses fluidity." },
+            "111101": { id: 13, cn: "同人", en: "Fellowship", structure: "天火", judgment: "同人于野，亨。", symbol: "天火同性，旷野聚众。象征打破隔阂，与人和同。", guide: "大公无私，打破隔阂。按公共原则团结众人，打破狭隘的圈子。", oracle: "同人于野，亨。利涉大川。", oracle_en: "Fellowship with men in the open. Success. It furthers one to cross the great water.", image: "天与火，同人；君子以类族辨物。", image_en: "Heaven together with fire: The image of Fellowship with Men. Thus the superior man organizes the clans and makes distinctions between things.", sd: "开放连接。网络节点互通。", sd_en: "Open connection. Network nodes intercommunicate." },
+            "101111": { id: 14, cn: "大有", en: "Possession in Great Measure", structure: "火天", judgment: "元亨。", symbol: "火照天上，普照万物。象征盛大的财富、资源与威望。", guide: "遏恶扬善，承担责任。顺应天命，妥善管理巨大的财富，承担社会责任。", oracle: "元亨。", oracle_en: "Supreme success.", image: "火在天上，大有；君子以遏恶扬善，顺天休命。", image_en: "Fire in heaven above: The image of Possession in Great Measure. Thus the superior man curbs evil and furthers good, and thereby obeys the benevolent will of heaven.", sd: "中心辐射。资源高度集中。", sd_en: "Central radiation. High resource concentration." },
+            "000100": { id: 15, cn: "谦", en: "Modesty", structure: "地山", judgment: "亨，君子有终。", symbol: "山藏地中，内高外低。象征内心充实但外表谦逊。", guide: "谦虚受益，增益不足。减少多余，增益不足，平抑愤怒，如此方能长久。", oracle: "亨，君子有终。", oracle_en: "Success. The superior man carries things through.", image: "地中有山，谦；君子以裒多益寡，称物平施。", image_en: "Within the earth, a mountain: The image of Modesty. Thus the superior man reduces that which is too much, and augments that which is too little. He weighs things and makes them equal.", sd: "内隐势能。能量内敛不发。", sd_en: "Implicit potential. Energy restrained." },
+            "001000": { id: 16, cn: "豫", en: "Enthusiasm", structure: "雷地", judgment: "利建侯行师。", symbol: "雷出地奋，万物复苏。象征顺应时机的喜悦与动力。", guide: "激发众志，顺应时机。利用音乐与热情来凝聚人心，但要警惕沉溺安乐。", oracle: "利建侯行师。", oracle_en: "It furthers one to install helpers and to set armies in motion.", image: "雷出地奋，豫；先王以作乐崇德，殷荐之上帝，以配祖考。", image_en: "Thunder comes resounding out of the earth: The image of Enthusiasm. Thus the ancient kings made music in order to honor merit, and offered it with magnificence to the Supreme God, inviting their ancestors to be present.", sd: "共振激发。频率达成一致。", sd_en: "Resonance excitation. Frequencies align." },
+            "011001": { id: 17, cn: "随", en: "Following", structure: "泽雷", judgment: "元亨利贞，无咎。", symbol: "雷入泽中，随时而动。象征顺从形势，灵活应变。", guide: "放弃成见，灵活应变。择善而从，顺应客观规律，不固执己见。", oracle: "元亨利贞，无咎。", oracle_en: "Supreme success. Perseverance furthers. No blame.", image: "泽中有雷，随；君子以向晦入宴息。", image_en: "Thunder in the middle of the lake: The image of Following. Thus the superior man at nightfall goes indoors for rest and recuperation.", sd: "动态跟随。系统适应环境变化。", sd_en: "Dynamic following. System adapts to environment." },
+            "100110": { id: 18, cn: "蛊", en: "Work on Decay", structure: "山风", judgment: "元亨，利涉大川。", symbol: "风阻山下，物腐生虫。象征事物因陈旧而败坏，需要整顿。", guide: "振作革新，周密计划。在整顿前后要周密计划（先甲三日，后甲三日）。", oracle: "元亨，利涉大川。先甲三日，后甲三日。", oracle_en: "Supreme success. It furthers one to cross the great water. Before the starting point, three days. After the starting point, three days.", image: "山下有风，蛊；君子以振民育德。", image_en: "The wind blows low on the mountain: The image of Decay. Thus the superior man stirs up the people and strengthens their spirit.", sd: "结构崩坏。熵增达到极限。", sd_en: "Structural collapse. Entropy reaches limit." },
+            "000011": { id: 19, cn: "临", en: "Approach", structure: "地泽", judgment: "元亨利贞。", symbol: "居高临下，阳气增长。象征亲自督导与管理。", guide: "亲临教化，防备衰退。在盛世时要对未来的危机（衰退）有所防备。", oracle: "元亨利贞。至于八月有凶。", oracle_en: "Supreme success. Perseverance furthers. When the eighth month comes, there will be misfortune.", image: "泽上有地，临；君子以教思无穷，容保民无疆。", image_en: "The earth above the lake: The image of Approach. Thus the superior man is inexhaustible in his will to teach, and without limits in his tolerance and protection of the people.", sd: "逼近临界。阳能开始主导。", sd_en: "Approaching critical. Yang energy dominates." },
+            "110000": { id: 20, cn: "观", en: "Contemplation", structure: "风地", judgment: "盥而不荐。", symbol: "风行地上，万民瞻仰。象征观察民情与作为榜样。", guide: "庄重示人，诚敬感化。以诚敬之心感化他人。", oracle: "盥而不荐，有孚颙若。", oracle_en: "The ablution has been made, but not yet the offering. Full of trust they look up to him.", image: "风行地上，观；先王以省方，观民设教。", image_en: "The wind blows over the earth: The image of Contemplation. Thus the kings of old visited the regions of the world, contemplated the people, and gave them instruction.", sd: "全景俯瞰。信息单向流动。", sd_en: "Panoramic view. Information flows one-way." },
+            "101001": { id: 21, cn: "噬嗑", en: "Biting Through", structure: "火雷", judgment: "亨。利用狱。", symbol: "咬合硬物，电闪雷鸣。象征通过刑罚法律来惩治罪恶。", guide: "明察秋毫，整顿秩序。消除障碍与坏人，恩威并施，整顿秩序。", oracle: "亨。利用狱。", oracle_en: "Success. It is favorable to let justice be administered.", image: "雷电，噬嗑；先王以明罚敕法。", image_en: "Thunder and lightning: The image of Biting Through. Thus the kings of former times made firm the laws through clearly defined penalties.", sd: "强力穿透。打破结构阻塞。", sd_en: "Forceful penetration. Breaking structural blockage." },
+            "100101": { id: 22, cn: "贲", en: "Grace", structure: "山火", judgment: "亨。小利有攸往。", symbol: "山下有火，文饰光彩。象征礼仪、艺术与外在修饰。", guide: "文质彬彬，本质第一。修饰是必要的，但不可喧宾夺主，本质依然第一。", oracle: "亨。小利有攸往。", oracle_en: "Success. In small matters it is favorable to undertake something.", image: "山下有火，贲；君子以明庶政，无敢折狱。", image_en: "Fire at the foot of the mountain: The image of Grace. Thus the superior man proceeds when clearing up current affairs. But he dare not decide controversial issues in this way.", sd: "表面装饰。内部结构稳固。", sd_en: "Surface decoration. Internal structure solid." },
+            "100000": { id: 23, cn: "剥", en: "Splitting Apart", structure: "山地", judgment: "不利有攸往。", symbol: "山体崩塌，阴盛阳衰。象征根基被侵蚀，小人当道。", guide: "隐忍顺受，巩固基础。形势不利，应暂停行动，厚待下属以巩固基础。", oracle: "不利有攸往。", oracle_en: "It does not further one to go anywhere.", image: "山附于地，剥；上以厚下，安宅。", image_en: "The mountain rests on the earth: The image of Splitting Apart. Thus those above can ensure their position only by giving generously to those below.", sd: "底部镂空。系统极其脆弱。", sd_en: "Bottom hollowed out. System extremely fragile." },
+            "000001": { id: 24, cn: "复", en: "Return", structure: "地雷", judgment: "亨。", symbol: "一阳复生，循环重启。象征黑暗后的光明回归，新的开始。", guide: "顺应自然，呵护新生。保护新生的微弱力量，静待其壮大。", sd: "循环重启。新的周期开始。", oracle: "亨。", oracle_en: "Success.", image: "雷在地中，复；先王以至日闭关。", image_en: "Thunder within the earth." },
+            "111001": { id: 25, cn: "无妄", en: "Innocence", structure: "天雷", judgment: "元亨利贞。", symbol: "天命本性，真实无妄。象征顺应天理自然。", guide: "保持真诚，不存虚妄。若动机不纯，行动必招灾祸。", sd: "自然无序。无人工干预。", oracle: "元亨利贞。", oracle_en: "Supreme success.", image: "天下雷行，物与无妄。", image_en: "Under heaven thunder rolls." },
+            "100111": { id: 26, cn: "大畜", en: "Great Taming", structure: "山天", judgment: "利贞。", symbol: "天在山中，胸怀宽广。象征巨大的物质与才德积蓄。", guide: "取法前贤，积蓄力量。积蓄力量不仅为了自己，更应服务社会。", sd: "高压存储。能量密度极大。", oracle: "利贞。", oracle_en: "Perseverance furthers.", image: "天在山中，大畜；君子以多识前言。", image_en: "Heaven within the mountain." },
+            "100001": { id: 27, cn: "颐", en: "Nourishment", structure: "山雷", judgment: "贞吉。", symbol: "颐养身心，上下唇形。象征饮食营养与言语谨慎。", guide: "慎言节食，修身养性。观察万物如何被养育，以此修身。", sd: "吞吐交换。物质交换。", oracle: "贞吉。", oracle_en: "Perseverance brings good fortune.", image: "山下有雷，颐；君子以慎言语。", image_en: "Thunder beneath the mountain." },
+            "011110": { id: 28, cn: "大过", en: "Preponderance", structure: "泽风", judgment: "栋桡。", symbol: "泽灭木，压力过大。象征非常时期，栋梁弯曲，负荷过重。", guide: "独立不惧，非常手段。必须采取非常的手段行动，解决问题。", sd: "结构超载。临界断裂。", oracle: "栋桡。", oracle_en: "The ridgepole sags.", image: "泽灭木，大过；君子以独立不惧。", image_en: "The lake rises above the trees." },
+            "010010": { id: 29, cn: "坎", en: "The Abysmal", structure: "水水", judgment: "习坎。", symbol: "重重险阻，水流湍急。象征人生中的危机与考验。", guide: "习教事，坚韧如水。在困境中保持内心坚韧，像水一样流动。", sd: "流体湍流。路径多变。", oracle: "习坎。", oracle_en: "The Abysmal repeated.", image: "水洊至，习坎；君子以常德行。", image_en: "Water flows on." },
+            "101101": { id: 30, cn: "离", en: "The Clinging", structure: "火火", judgment: "利贞。", symbol: "光明附丽，火依附物。象征文明、智慧与相互依存。", guide: "柔顺中正，依附正道。依附正道，照亮四方，保持柔顺。", sd: "依附共生。依赖载体。", oracle: "利贞。", oracle_en: "Perseverance furthers.", image: "明两作，离；大人以继明照于四方。", image_en: "The twofold brightness." },
+            "011100": { id: 31, cn: "咸", en: "Influence", structure: "泽山", judgment: "亨。", symbol: "山泽通气，无心之感。象征真挚的情感交流与心灵感应。", guide: "虚受人，感应在心。虚怀若谷才能容纳他人，感应发自内心。", sd: "快速感应。无阻传递。", oracle: "亨。", oracle_en: "Success.", image: "山上有泽，咸；君子以虚受人。", image_en: "A lake on the mountain." },
+            "001110": { id: 32, cn: "恒", en: "Duration", structure: "雷风", judgment: "亨。", symbol: "雷风相与，长久不变。象征稳定的秩序与恒心。", guide: "立不易方，保持平衡。坚守正道，不轻易改变志向。", sd: "动态稳态。长期循环。", oracle: "亨。", oracle_en: "Success.", image: "雷风，恒；君子以立不易方。", image_en: "Thunder and wind." },
+            "111100": { id: 33, cn: "遯", en: "Retreat", structure: "天山", judgment: "亨，小利贞。", symbol: "天退山止，阴长阳消。象征在不利形势下的退避。", guide: "远小人，明哲保身。并非逃跑，而是明哲保身，保留实力。", sd: "战略撤离。空间换时间。", oracle: "亨，小利贞。", oracle_en: "Success.", image: "天下有山，遯；君子以远小人。", image_en: "Mountain under heaven." },
+            "001111": { id: 34, cn: "大壮", en: "Great Power", structure: "雷天", judgment: "利贞。", symbol: "雷在天上，阳气强盛。象征力量巨大，声势浩大。", guide: "非礼弗履，约束力量。切勿恃强凌弱，力量必须受到约束。", sd: "力量过剩。需外部约束。", oracle: "利贞。", oracle_en: "Perseverance furthers.", image: "雷在天上，大壮；君子以非礼弗履。", image_en: "Thunder in heaven above." },
+            "101000": { id: 35, cn: "晋", en: "Progress", structure: "火地", judgment: "康侯用锡马。", symbol: "旭日东升，光明普照。象征晋升、进取与获得荣耀。", guide: "昭明德，施展才华。充分施展才华，建功立业，保持德行。", sd: "线性上升。正反馈循环。", oracle: "康侯用锡马。", oracle_en: "The powerful prince is honored.", image: "明出地上，晋；君子以自昭明德。", image_en: "The sun rises over the earth." },
+            "000101": { id: 36, cn: "明夷", en: "Darkening", structure: "地火", judgment: "利艰贞。", symbol: "明入地中，光明受损。象征处于昏暗、逆境或暴政之中。", guide: "韬光养晦，坚守正志。内藏智慧，外示柔顺，在艰难中坚守。", sd: "能量屏蔽。内部高压。", oracle: "利艰贞。", oracle_en: "Perseverance in difficulty.", image: "明入地中，明夷；君子以莅众。", image_en: "The light has sunk into the earth." },
+            "110101": { id: 37, cn: "家人", en: "The Family", structure: "风火", judgment: "利女贞。", symbol: "风自火出，由内向外。象征家庭内部的秩序与伦理。", guide: "各司其职，治家严正。治家严正，才能推及天下。", sd: "核心凝聚。向心结构。", oracle: "利女贞。", oracle_en: "Perseverance of the woman.", image: "风自火出，家人；君子以言有物。", image_en: "Wind comes forth from fire." },
+            "101011": { id: 38, cn: "睽", en: "Opposition", structure: "火泽", judgment: "小事吉。", symbol: "水火背离，同床异梦。象征人际关系中的矛盾与对立。", guide: "异中求同，承认差异。承认差异，在小事上利用这种差异。", sd: "相斥分离。离心结构。", oracle: "小事吉。", oracle_en: "In small matters, good fortune.", image: "上火下泽，睽；君子以同而异。", image_en: "Fire above, lake below." },
+            "010100": { id: 39, cn: "蹇", en: "Obstruction", structure: "水山", judgment: "利西南。", symbol: "前有险水，后有峻山。象征进退两难的艰难险阻。", guide: "反身修德，不宜冒进。不宜冒进，应反省自身，寻求贤人帮助。", sd: "路径阻塞。流动停滞。", oracle: "利西南。", oracle_en: "It furthers one to go southwest.", image: "山上有水，蹇；君子以反身修德。", image_en: "Water on the mountain." },
+            "001010": { id: 40, cn: "解", en: "Deliverance", structure: "雷水", judgment: "利西南。", symbol: "雷雨交作，郁结缓解。象征困难消除，赦免与宽容。", guide: "赦过宥罪，休养生息。从简处理，休养生息。", sd: "压力释放。系统解压。", oracle: "利西南。", oracle_en: "It furthers one to go southwest.", image: "雷雨作，解；君子以赦过宥罪。", image_en: "Thunder and rain set in." },
+            "100011": { id: 41, cn: "损", en: "Decrease", structure: "山泽", judgment: "有孚。", symbol: "损下益上，克制欲望。象征为了大局而牺牲局部利益。", guide: "惩忿窒欲，真诚奉献。控制情绪与欲望，真诚的奉献将带来吉祥。", sd: "能量转移。低位向高。", oracle: "有孚。", oracle_en: "Sincerity.", image: "山下有泽，损；君子以惩忿窒欲。", image_en: "At the foot of the mountain, the lake." },
+            "110001": { id: 42, cn: "益", en: "Increase", structure: "风雷", judgment: "利有攸往。", symbol: "风雷相益，损上益下。象征施惠于民，资源充沛。", guide: "见善则迁，有过则改。利用资源大展宏图，勇于改正错误。", sd: "系统增益。高位回馈。", oracle: "利有攸往。", oracle_en: "It furthers one to undertake something.", image: "风雷，益；君子以见善则迁。", image_en: "Wind and thunder." },
+            "011111": { id: 43, cn: "夬", en: "Break-through", structure: "泽天", judgment: "扬于王庭。", symbol: "泽溃堤坝，清除小人。象征果断的决断与清除积弊。", guide: "施禄及下，决断积弊。公开公正地清除隐患，不用武力。", sd: "决堤宣泄。势不可挡。", oracle: "扬于王庭。", oracle_en: "Make the matter known.", image: "泽上于天，夬；君子以施禄及下。", image_en: "The lake has risen up to heaven." },
+            "111110": { id: 44, cn: "姤", en: "Coming to Meet", structure: "天风", judgment: "女壮。", symbol: "风行天下，不期而遇。象征意外的机缘，也指阴长阳消。", guide: "施命诰四方，警惕诱惑。抓住机遇，但对突如其来的诱惑保持警惕。", sd: "微阴侵入。系统扰动。", oracle: "女壮。", oracle_en: "The maiden is powerful.", image: "天下有风，姤；后以施命诰四方。", image_en: "The wind blows under heaven." },
+            "011000": { id: 45, cn: "萃", en: "Gathering", structure: "泽地", judgment: "亨。", symbol: "泽汇于地，群英荟萃。象征人才、精神与财富的聚合。", guide: "除戎器，团结人心。设立共同信仰（宗庙）来团结人心。", sd: "高密度聚合。引力中心。", oracle: "亨。", oracle_en: "Success.", image: "泽上于地，萃；君子以除戎器。", image_en: "The lake rises above the earth." },
+            "000110": { id: 46, cn: "升", en: "Pushing Upward", structure: "地风", judgment: "元亨。", symbol: "木生土中，积小成大。象征顺畅、自然的晋升与生长。", guide: "顺德积小，稳步前行。寻找指引，不用担忧，稳步前行。", sd: "垂直生长。克服重力。", oracle: "元亨。", oracle_en: "Supreme success.", image: "地中生木，升；君子以顺德。", image_en: "Wood grows within the earth." },
+            "011010": { id: 47, cn: "困", en: "Oppression", structure: "泽水", judgment: "亨。", symbol: "水干泽竭，陷入绝境。象征才智无法施展，身处穷困。", guide: "致命遂志，坚守志节。视困境为磨练，坚守志节，多说无益，唯有行动。", sd: "资源枯竭。系统停摆。", oracle: "亨。", oracle_en: "Success.", image: "泽无水，困；君子以致命遂志。", image_en: "There is no water in the lake." },
+            "010110": { id: 48, cn: "井", en: "The Well", structure: "水风", judgment: "改邑不改井。", symbol: "养人无穷，恒久不变。象征社会福利、资源共享与内在德行。", guide: "慰民劝相，维护资源。维护资源（淘井），不仅要独善其身。", sd: "深层挖掘。固定源头。", oracle: "改邑不改井。", oracle_en: "The town may be changed.", image: "木上有水，井；君子以劳民劝相。", image_en: "Water over wood." },
+            "011101": { id: 49, cn: "革", en: "Revolution", structure: "泽火", judgment: "已日乃孚。", symbol: "水火不容，势必变革。象征推翻旧制度，建立新秩序。", guide: "治历明时，顺天应人。在时机极其成熟时进行彻底的改革。", sd: "相变。从量变到质。", oracle: "已日乃孚。", oracle_en: "Believed on your own day.", image: "泽中有火，革；君子以治历明时。", image_en: "Fire in the lake." },
+            "101110": { id: 50, cn: "鼎", en: "The Cauldron", structure: "火风", judgment: "元吉。", symbol: "调和五味，除旧布新。象征权力的稳固、人才培养与新气象。", guide: "正位凝命。端正位置，完成使命，展现庄重威严的形象。", oracle: "元吉。", oracle_en: "Supreme good fortune.", image: "木上有火，鼎；君子以正位凝命。", image_en: "Fire over wood." },
+            "001001": { id: 51, cn: "震", en: "The Arousing", structure: "雷震", judgment: "亨。", symbol: "雷声轰鸣，震惊百里。象征变故、恐惧与觉醒。", guide: "恐惧修省，保持泰然。在震惊中反省自身，保持泰然自若。", sd: "剧烈震荡。能量脉冲。", oracle: "亨。", oracle_en: "Success.", image: "洊雷，震；君子以恐惧修省。", image_en: "Thunder repeated." },
+            "100100": { id: 52, cn: "艮", en: "Keeping Still", structure: "山艮", judgment: "艮其背。", symbol: "重山阻隔，静止不动。象征止息欲望，内心的安宁。", guide: "思不出位，内心安宁。该停则停，视而不见，保持内心的独立。", sd: "绝对静止。动量归零。", oracle: "艮其背。", oracle_en: "Keeping his back still.", image: "兼山，艮；君子以思不出其位。", image_en: "Mountains standing close." },
+            "110100": { id: 53, cn: "渐", en: "Development", structure: "风山", judgment: "女归吉。", symbol: "树木生长，循序渐进。象征按部就班的缓慢发展。", guide: "居贤德，积小成大。不可急躁，积小成大，稳步前行才能长久。", sd: "阶梯上升。稳定演化。", oracle: "女归吉。", oracle_en: "The maiden is given in marriage.", image: "山上有木，渐；君子以居贤德善俗。", image_en: "On the mountain, a tree." },
+            "001011": { id: 54, cn: "归妹", en: "Marrying Maiden", structure: "雷泽", judgment: "征凶。", symbol: "感情冲动，违背礼制。象征轻率的结合与颠倒的秩序。", guide: "永终知敝，避免不幸。认识到冲动带来的弊端，避免因盲目行动。", sd: "错位结合。结构不稳。", oracle: "征凶。", oracle_en: "Undertakings bring misfortune.", image: "泽上有雷，归妹；君子以永终知敝。", image_en: "Thunder over the lake." },
+            "001101": { id: 55, cn: "丰", en: "Abundance", structure: "雷火", judgment: "亨。", symbol: "雷电交辉，如日中天。象征盛大、丰收与顶峰。", guide: "折狱致刑，明断是非。盛极必衰，应像正午太阳普照天下。", sd: "峰值状态。能量饱和。", oracle: "亨。", oracle_en: "Success.", image: "雷电皆至，丰；君子以折狱致刑。", image_en: "Both thunder and lightning come." },
+            "101100": { id: 56, cn: "旅", en: "The Wanderer", structure: "火山", judgment: "小亨。", symbol: "火在山上，流离不定。象征羁旅漂泊与不稳定性。", guide: "明慎用刑，安分守己。作为过客应安分守己，谨慎刑罚。", sd: "布朗运动。无定向。", oracle: "小亨。", oracle_en: "Success in small matters.", image: "山上有火，旅；君子以明慎用刑。", image_en: "Fire on the mountain." },
+            "110110": { id: 57, cn: "巽", en: "The Gentle", structure: "风巽", judgment: "小亨。", symbol: "风无孔不入，顺从深入。象征潜移默化的渗透力。", guide: "申命行事，潜移默化。通过反复申明与柔顺的态度，深入人心。", sd: "渗透扩散。无孔不入。", oracle: "小亨。", oracle_en: "Success in small matters.", image: "随风，巽；君子以申命行事。", image_en: "Winds following one upon another." },
+            "011011": { id: 58, cn: "兑", en: "The Joyous", structure: "泽兑", judgment: "亨。", symbol: "两泽相连，互相滋润。象征沟通、喜悦与朋友讲习。", guide: "朋友讲习，诚信交流。以诚信为基础的交流，喜悦可以感召人心。", sd: "交互共鸣。信息交换。", oracle: "亨。", oracle_en: "Success.", image: "丽泽，兑；君子以朋友讲习。", image_en: "Lakes resting one on the other." },
+            "110010": { id: 59, cn: "涣", en: "Dispersion", structure: "风水", judgment: "亨。", symbol: "风吹水散，冰雪消融。象征离散人心或化解危机。", guide: "立庙聚人，凝聚人心。借助信仰凝聚人心，积极行动以拨乱反正。", sd: "离心扩散。结构解体。", oracle: "亨。", oracle_en: "Success.", image: "风行水上，涣；先王以享于帝立庙。", image_en: "Wind blowing over water." },
+            "010011": { id: 60, cn: "节", en: "Limitation", structure: "水泽", judgment: "亨。", symbol: "泽上之水，需受节制。象征制度、规范与适度。", guide: "制数度，建立制度。建立制度，但不可节制过度，否则无法长久。", sd: "容量限制。溢出控制。", oracle: "亨。", oracle_en: "Success.", image: "泽上有水，节；君子以制数度。", image_en: "Water over lake." },
+            "110011": { id: 61, cn: "中孚", en: "Inner Truth", structure: "风泽", judgment: "豚鱼吉。", symbol: "风吹水动，诚信感应。象征发自内心的信实。", guide: "议狱缓死，至诚感动。至诚可感动万物。公正断案，珍惜生命。", sd: "核心共振。内部一致。", oracle: "豚鱼吉。", oracle_en: "Pigs and fishes. Good fortune.", image: "泽上有风，中孚；君子以议狱缓死。", image_en: "Wind over lake." },
+            "001100": { id: 62, cn: "小过", en: "Small Excess", structure: "雷山", judgment: "亨。", symbol: "飞鸟遗音，小有过越。象征小事可过度，大事需谨慎。", guide: "行过乎恭，切勿高傲。在恭敬与俭约上稍微过度是吉利的。", sd: "微扰动。小幅振荡。", oracle: "亨。", oracle_en: "Success.", image: "山上有雷，小过；君子以行过乎恭。", image_en: "Thunder on the mountain." },
+            "010101": { id: 63, cn: "既济", en: "After Completion", structure: "水火", judgment: "亨。", symbol: "水火既济，完美平衡。象征大功告成，盛极之时。", guide: "思患预防，防备无序。在完美中保持忧患意识，防备从有序走向无序。", sd: "完美咬合。死锁状态。", oracle: "亨。", oracle_en: "Success.", image: "水在火上，既济；君子以思患而预防之。", image_en: "Water over fire." },
+            "101010": { id: 64, cn: "未济", en: "Before Completion", structure: "火水", judgment: "亨。", symbol: "火水不交，未竟事业。象征新的循环即将开始，充满希望。", guide: "慎始慎终，再造乾坤。辨别事物本质，各安其位，为下一次成功做准备。", sd: "错位势能。重启准备。", oracle: "亨。", oracle_en: "Success.", image: "火在水上，未济；君子以慎辨物居方。", image_en: "Fire over water." }
+        };
+
+        const stepMeanings = [
+            "初爻 · 根基 Grounding", 
+            "二爻 · 场域 Field", 
+            "三爻 · 变数 Transition", 
+            "四爻 · 环境 Context", 
+            "五爻 · 核心 Authority", 
+            "上爻 · 终局 Transcendence"
+        ];
+        
+        // 爻位结构详解数据 (Line Archetypes) with visual logic built-in
+        const lineArchetypes = [
+            { cn: "初爻 · 潜藏", en: "Line 1: The Hidden Root", desc: "事物之始，能量尚未显现。勿轻举妄动，宜深潜以待时。" },
+            { cn: "二爻 · 现田", en: "Line 2: The Field", desc: "崭露头角，开始与外界产生联系。利见大人，寻求指引。" },
+            { cn: "三爻 · 惕厉", en: "Line 3: The Danger", desc: "处于下卦之终，进退维谷。充满变数与危机，需格外小心。" },
+            { cn: "四爻 · 近君", en: "Line 4: The Minister", desc: "进入上卦，接近核心权力。如履薄冰，需辅佐而非僭越。" },
+            { cn: "五爻 · 尊位", en: "Line 5: The Ruler", desc: "中正当位，统领全局。能量最强，但也责任最重。" },
+            { cn: "上爻 · 亢龙", en: "Line 6: The Limit", desc: "物极必反。超脱世俗或走向衰退。终局的边缘，需知进退。" }
+        ];
+
+        // --- Logic Variables ---
+        let step = 0;
+        let builtLines = [];
+        let flickerInterval = null;
+        let resultTimer = null;
+        let isProcessing = false;
+        let currentQuantumState = '0';
+
+        // --- Global Functions ---
+
+        window.enterPhilosophy = function() {
+            document.getElementById('sec-entrance').classList.add('fade-out-force');
+            setTimeout(() => {
+                document.getElementById('sec-entrance').style.display = 'none';
+                
+                const phil = document.getElementById('sec-philosophy');
+                phil.style.display = 'flex';
+                phil.style.opacity = '0';
+                
+                requestAnimationFrame(() => {
+                    phil.style.pointerEvents = 'auto';
+                    phil.style.opacity = '1';
+                });
+            }, 500);
+        }
+
+        window.enterMatrix = function() {
+            document.getElementById('sec-philosophy').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('sec-philosophy').style.display = 'none';
+                
+                const matrix = document.getElementById('sec-matrix');
+                matrix.style.display = 'flex'; // Explicitly set flex
+                requestAnimationFrame(() => {
+                    matrix.classList.add('active');
+                });
+            }, 600);
+        }
+
+        window.backToEntranceFromPhil = function(e) {
+            e.stopPropagation();
+            document.getElementById('sec-philosophy').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('sec-philosophy').style.display = 'none';
+                document.getElementById('sec-entrance').style.display = 'flex';
+                requestAnimationFrame(() => {
+                    document.getElementById('sec-entrance').classList.remove('fade-out-force');
+                });
+            }, 500);
+        }
+
+        // [FIXED] Restored backToPhilosophy function
+        window.backToPhilosophy = function(e) {
+            e.stopPropagation();
+            document.getElementById('sec-matrix').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('sec-matrix').style.display = 'none';
+                
+                const phil = document.getElementById('sec-philosophy');
+                phil.style.display = 'flex';
+                void phil.offsetWidth;
+                
+                requestAnimationFrame(() => {
+                    phil.style.opacity = '1';
+                    phil.style.pointerEvents = 'auto';
+                });
+            }, 500);
+        }
+
+        // --- Core: Hard Reset Logic ---
+        function hardReset() {
+            if(flickerInterval) clearInterval(flickerInterval);
+            if(resultTimer) clearTimeout(resultTimer);
+            
+            step = 0; 
+            builtLines = []; 
+            isProcessing = false;
+            currentQuantumState = '0';
+
+            const stack = document.getElementById('stack');
+            if(stack) {
+                stack.classList.remove('analyzing');
+                stack.innerHTML = '';
+                stack.style.transform = '';
+                const beams = stack.querySelectorAll('.scan-beam');
+                beams.forEach(b => b.remove());
+            }
+            
+            const qState = document.getElementById('quantum-state');
+            if(qState) qState.innerHTML = '';
+
+            const restoreList = ['meaning-display', 'build-guide', 'abort-btn-container'];
+            restoreList.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.classList.remove('fade-out-force');
+                    el.style.opacity = '1';
+                    el.style.pointerEvents = 'auto';
+                }
+            });
+            
+            const stepIdx = document.getElementById('step-idx');
+            if(stepIdx) stepIdx.innerText = '1';
+            
+            const stepMeaning = document.getElementById('step-meaning');
+            if(stepMeaning) stepMeaning.innerText = stepMeanings[0];
+        }
+
+        window.abortRitual = function(e) {
+            e.stopPropagation();
+            hardReset();
+            
+            document.getElementById('sec-build').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('sec-build').style.display = 'none';
+                document.getElementById('sec-matrix').style.display = 'flex';
+                requestAnimationFrame(() => {
+                    document.getElementById('sec-matrix').classList.add('active');
+                });
+            }, 500);
+        }
+
+        // --- Detail Modal ---
+        // Make these accessible globally
+        window.openDetail = function(bin) {
+            const data = hexMap[bin];
+            if(!data) return;
+
+            const panel = document.querySelector('.detail-panel');
+            if(panel) panel.scrollTop = 0;
+
+            document.getElementById('detail-cn').innerText = data.cn;
+            document.getElementById('detail-en').innerText = data.en;
+            
+            // Safe set for detail view
+            const safeSet = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val || ""; };
+            const safeHTML = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val || ""; };
+
+            // For Detail Panel (Encyclopedic)
+            safeSet('detail-oracle', data.oracle);
+            safeSet('detail-oracle-en', data.oracle_en);
+            safeSet('detail-image', data.image);
+            safeSet('detail-image-en', data.image_en);
+            
+            safeSet('detail-symbol', data.symbol); 
+            safeSet('detail-guide', data.guide);
+            
+            safeSet('detail-structure', data.sd);
+            safeSet('detail-structure-en', data.sd_en); 
+
+            const gfx = document.getElementById('detail-graphic');
+            if(gfx) {
+                gfx.innerHTML = '';
+                for(let i=0; i<6; i++) {
+                    const l = document.createElement('div');
+                    l.className = `g-line ${bin[i] === '0' ? 'yin' : ''}`;
+                    gfx.appendChild(l);
+                }
+            }
+            
+            const linesContainer = document.getElementById('detail-lines-container');
+            if(linesContainer) {
+                linesContainer.innerHTML = '';
+                for(let i=0; i<6; i++) {
+                    const bit = bin[i]; const lineNum = 6 - i; const type = bit === '1' ? '阳' : '阴';
+                    const archetype = lineArchetypes[lineNum - 1]; 
+                    
+                    const row = document.createElement('div');
+                    row.className = 'line-detail-row';
+                    
+                    let lineVisual = '';
+                    if(bit === '1') {
+                        lineVisual = '<div class="detail-line"></div>';
+                    } else {
+                        lineVisual = '<div class="detail-line yin"></div>';
+                    }
+
+                    row.innerHTML = `
+                        <div class="w-8 flex items-center">${lineVisual}</div>
+                        <div class="line-content">
+                            <div class="line-name">${archetype.cn} <span class="text-gray-300 ml-2 text-[10px] uppercase">${type}</span></div>
+                            <div class="line-desc">${archetype.desc}</div>
+                        </div>
+                    `;
+                    linesContainer.appendChild(row);
+                }
+            }
+
+            document.getElementById('sec-detail-modal').classList.add('active');
+        }
+
+        window.closeDetail = function() {
+            document.getElementById('sec-detail-modal').classList.remove('active');
+        }
+
+        // --- Build Logic ---
+        function startBuild() {
+            hardReset();
+
+            document.getElementById('sec-matrix').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('sec-matrix').style.display = 'none';
+                
+                const buildSec = document.getElementById('sec-build');
+                buildSec.style.display = 'flex';
+                buildSec.style.opacity = '0';
+                
+                requestAnimationFrame(() => {
+                    buildSec.classList.add('active');
+                    buildSec.style.opacity = ''; 
+                });
+                
+                startFlicker();
+            }, 600);
+        }
+
+        function startFlicker() {
+            const zone = document.getElementById('quantum-state');
+            if(flickerInterval) clearInterval(flickerInterval);
+            
+            isProcessing = false;
+
+            flickerInterval = setInterval(() => {
+                const state = Math.random() > 0.5 ? '1' : '0';
+                currentQuantumState = state; 
+                if(zone) {
+                    zone.innerHTML = '';
+                    const line = document.createElement('div');
+                    line.className = `hex-bar ${state === '0' ? 'b-broken' : 'b-solid'}`;
+                    line.style.animation = 'none'; line.style.opacity = '1';
+                    zone.appendChild(line);
+                }
+            }, 60);
+        }
+
+        function collapse() {
+            if(step >= 6 || isProcessing) return;
+            
+            isProcessing = true;
+            if(flickerInterval) clearInterval(flickerInterval);
+
+            const flash = document.getElementById('flash-layer');
+            flash.style.opacity = '0.6'; setTimeout(() => flash.style.opacity = '0', 80);
+
+            builtLines.push(currentQuantumState);
+
+            const stack = document.getElementById('stack');
+            const item = document.createElement('div');
+            item.className = 'hex-bar'; 
+            const bar = document.createElement('div');
+            bar.className = currentQuantumState === '0' ? 'b-broken' : 'b-solid';
+            item.appendChild(bar);
+            stack.appendChild(item); 
+            
+            stack.style.transform = 'translateY(15px)';
+            setTimeout(() => stack.style.transform = 'translateY(0)', 150);
+
+            step++;
+            if(step < 6) {
+                const stepIdx = document.getElementById('step-idx');
+                const stepMeaning = document.getElementById('step-meaning');
+                const quantumState = document.getElementById('quantum-state');
+
+                if(stepIdx) stepIdx.innerText = step + 1;
+                if(stepMeaning) stepMeaning.innerText = stepMeanings[step];
+                if(quantumState) quantumState.innerHTML = '';
+                
+                setTimeout(startFlicker, 350); 
+            } else {
+                const uiElements = ['meaning-display', 'build-guide', 'abort-btn-container'];
+                uiElements.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.classList.add('fade-out-force');
+                });
+                
+                const qState = document.getElementById('quantum-state');
+                if(qState) qState.innerHTML = '';
+                
+                const stack = document.getElementById('stack');
+                stack.classList.add('analyzing');
+                
+                const beam = document.createElement('div');
+                beam.className = 'scan-beam';
+                stack.appendChild(beam);
+
+                resultTimer = setTimeout(showResult, 2500);
+            }
+        }
+
+        function showResult() {
+            const code = [...builtLines].reverse().join('');
+            const data = hexMap[code] || hexMap["000000"];
+            
+            const card = document.querySelector('.archive-card');
+            if(card) card.scrollTop = 0;
+
+            const safeSetText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val || ""; };
+            const safeSetHTML = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val || ""; };
+
+            safeSetText('res-code', "#" + code);
+            safeSetText('res-date', new Date().toLocaleDateString('en-CA').replace(/-/g, '.'));
+            safeSetText('res-cn', data.cn);
+            safeSetText('res-en', data.en);
+            
+            // Map Result Page (Action Oriented)
+            // 1. Status Analysis (Structure + Judgment)
+            // [FIX] Force split English to next line if present in string or use separate fields
+            safeSetHTML('res-highlight-a', `<span class="meaning-highlight">${data.structure}</span>`);
+            safeSetText('res-highlight-a-en', "Judgment");
+            
+            let cleanJudgment = data.judgment || "";
+            // Replace first occurrence of parenthesis content with newline
+            cleanJudgment = cleanJudgment.replace(/(\s*\(.*?\))/, "\n$1");
+            safeSetText('res-analysis', cleanJudgment);
+            safeSetText('res-analysis-en', ""); // Handled via newline in main text block
+
+            // 2. Action Protocol (Symbol + Guide)
+            safeSetHTML('res-highlight-p', `<span class="meaning-highlight">象征 Symbol</span>`);
+            safeSetText('res-highlight-p-en', "");
+            
+            let cleanSymbol = data.symbol || "";
+            cleanSymbol = cleanSymbol.replace(/(\s*\(.*?\))/, "\n$1");
+            safeSetText('res-protocol', cleanSymbol); 
+            
+            // 3. Strategy (Guide)
+            safeSetHTML('res-highlight-s', `<span class="meaning-highlight">指引 Guide</span>`);
+            safeSetText('res-highlight-s-en', "");
+            
+            let cleanGuide = data.guide || "";
+            cleanGuide = cleanGuide.replace(/(\s*\(.*?\))/, "\n$1");
+            safeSetText('res-structure', cleanGuide);
+            safeSetText('res-structure-en', "");
+
+            const gfx = document.getElementById('res-graphic');
+            gfx.innerHTML = '';
+            for(let bit of code) {
+                const l = document.createElement('div');
+                l.className = `g-line ${bit === '0' ? 'yin' : ''}`;
+                gfx.appendChild(l);
+            }
+
+            document.getElementById('sec-build').classList.remove('active');
+            
+            const resSec = document.getElementById('sec-result');
+            resSec.style.display = 'flex'; 
+            
+            setTimeout(() => {
+                document.getElementById('sec-build').style.display = 'none';
+                resSec.classList.add('active');
+            }, 600);
+        }
+
+        window.returnToMatrix = function() {
+            document.getElementById('sec-result').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('sec-result').style.display = 'none';
+                document.getElementById('sec-matrix').style.display = 'flex';
+                requestAnimationFrame(() => {
+                    document.getElementById('sec-matrix').classList.add('active');
+                });
+                
+                hardReset();
+            }, 500);
+        }
+
+        // --- Init Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const cursor = document.getElementById('cursor');
+            document.addEventListener('mousemove', (e) => {
+                cursor.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`;
+            });
+            document.addEventListener('mousedown', () => document.body.classList.add('click-active'));
+            document.addEventListener('mouseup', () => document.body.classList.remove('click-active'));
+            
+            const bindHover = () => {
+                document.querySelectorAll('.interactable').forEach(el => {
+                    el.addEventListener('mouseenter', () => document.body.classList.add('hover-active'));
+                    el.addEventListener('mouseleave', () => document.body.classList.remove('hover-active'));
+                });
+            }
+
+            const grid = document.getElementById('grid');
+            const fragment = document.createDocumentFragment();
+            for(let i=0; i<64; i++) {
+                const bin = i.toString(2).padStart(6, '0');
+                const cell = document.createElement('div'); cell.className = 'cell interactable'; cell.dataset.bin = bin;
+                for(let bit of bin) { const line = document.createElement('div'); line.className = `mini-line ${bit === '0' ? 'yin' : ''}`; cell.appendChild(line); }
+                fragment.appendChild(cell);
+            }
+            grid.appendChild(fragment);
+
+            grid.addEventListener('mouseover', (e) => {
+                const cell = e.target.closest('.cell');
+                if (cell) {
+                    const bin = cell.dataset.bin;
+                    const info = hexMap[bin];
+                    if (info) {
+                        document.getElementById('hover-cn').innerText = info.cn;
+                        const enEl = document.getElementById('hover-en');
+                        if(enEl) enEl.innerText = info.en;
+                    }
+                }
+            });
+
+            grid.addEventListener('click', (e) => {
+                const cell = e.target.closest('.cell');
+                if (cell) {
+                    e.stopPropagation(); 
+                    openDetail(cell.dataset.bin);
+                }
+            });
+
+            bindHover();
+        });
+    </script>
+</body>
+</html>
